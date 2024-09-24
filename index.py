@@ -2,19 +2,15 @@ import streamlit as st
 import boto3
 import json
 import uuid
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
+st.title("Dayos AI Assistant")
 
 bedrock_agent_runtime = boto3.client(
     service_name='bedrock-agent-runtime',
-    region_name=os.getenv('AWS_REGION'),
-    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
+    region_name=st.secrets["aws_credentials"]["AWS_REGION"],
+    aws_access_key_id=st.secrets["aws_credentials"]["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=st.secrets["aws_credentials"]["AWS_SECRET_ACCESS_KEY"]
 )
-
-st.title("Dayos AI Assistant")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -29,8 +25,8 @@ if prompt := st.chat_input("What would you like to know about Dayos?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     response = bedrock_agent_runtime.invoke_agent(
-        agentId=os.getenv('BEDROCK_AGENT_ID'),
-        agentAliasId=os.getenv('BEDROCK_AGENT_ALIAS_ID'),
+        agentId=st.secrets["bedrock_agent"]["BEDROCK_AGENT_ID"],
+        agentAliasId=st.secrets["bedrock_agent"]["BEDROCK_AGENT_ALIAS_ID"],
         sessionId=st.session_state.session_id,
         inputText=prompt
     )
