@@ -74,6 +74,3 @@ def ask():
         'response': assistant_response,
         'session_id': session_id
     })
-
-if __name__ == '__main__':
-    app.run(debug=True)

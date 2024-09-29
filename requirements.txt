@@ -1,6 +1,6 @@
+flask
 boto3
 python-dotenv
-langchain_aws
 langchain
+langchain-aws
 langchain-community
-flask
