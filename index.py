@@ -5,7 +5,7 @@
 
 import boto3
 import uuid
-from langchain_aws.retrievers import AmazonKnowledgeBasesRetriever
+from langchain_community.retrievers.bedrock import AmazonKnowledgeBasesRetriever
 from langchain.chains import RetrievalQA
 from langchain_aws import ChatBedrock
 import streamlit as st
