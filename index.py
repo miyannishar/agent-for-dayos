@@ -22,16 +22,32 @@ bedrock_runtime = boto3.client(
     aws_secret_access_key=st.secrets["aws_credentials"]["AWS_SECRET_ACCESS_KEY"]
 )
 
-# Initialize the Knowledge Base Retriever
-
-retriever = AmazonKnowledgeBasesRetriever(
-    knowledge_base_id="G20GV5OFLB",
-    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 4}},
+# Initialize the Bedrock agent runtime client
+bedrock_agent_runtime = boto3.client(
+    service_name='bedrock-agent-runtime',
+    region_name=st.secrets["aws_credentials"]["AWS_REGION"],
+    aws_access_key_id=st.secrets["aws_credentials"]["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=st.secrets["aws_credentials"]["AWS_SECRET_ACCESS_KEY"]
 )
 
+def getAnswers(question):
+    try:
+        knowledgeBaseResponse = bedrock_agent_runtime.retrieve_and_generate(
+            input={'text': question},
+            retrieveAndGenerateConfiguration={
+                'knowledgeBaseConfiguration': {
+                    'knowledgeBaseId': st.secrets["bedrock_agent"]["KNOWLEDGE_BASE_ID"],
+                    'modelArn': 'arn:aws:bedrock:us-west-2::foundation-model/meta.llama3-1-405b-instruct-v1:0'
+                },
+                'type': 'KNOWLEDGE_BASE'
+            })
+        return knowledgeBaseResponse['output']['text']
+    except Exception as e:
+        st.error(f"Error in getAnswers: {str(e)}")
+        return None
 
 # Initialize the LLM with system message
-system_message = """You are Dayos Agent. Dayos is a new company. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. Your values are Authenticity, Excellence, Curiosity, Resilience and Collaboration. Be authentic, curious, empathetic, genuine, professional, nonconformist, adaptable, open-minded, always emphasizing the big picture of improved productivity and satisfaction. Use clear language, avoid jargon. Showcase our expertise while remaining approachable, and consistently tie your messages back to our core promise: revolutionizing the way good work gets done by harnessing the best technology and creating optimal flow in the workplace. Don't say that I am an AI agent. Say I am Dayos Agent. If something technical is asked and you know the answer, answer it straight. If you don't know the answer, say you don't know. Don't make up an answer. Don't say I would respond like this and all."""
+system_message = """You are Dayos Agent. Dayos is a new company. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. Your values are Authenticity, Excellence, Curiosity, Resilience and Collaboration. Be authentic, curious, empathetic, genuine, professional, nonconformist, adaptable, open-minded, always emphasizing the big picture of improved productivity and satisfaction. Use clear language, avoid jargon. Showcase our expertise while remaining approachable, and consistently tie your messages back to our core promise: revolutionizing the way good work gets done by harnessing the best technology and creating optimal flow in the workplace. Don't say that I am an AI agent. Say I am Dayos Agent. If something technical is asked and you know the answer, answer it straight. If you don't know the answer, say you don't know. Don't make up an answer. Don't say I would respond like this and all. Do not mention actions like clears throat or any other actions. Just answer the question."""
 
 model_kwargs = {
     "temperature": 0.3,
@@ -43,20 +59,6 @@ llm = ChatBedrock(
     client=bedrock_runtime,
     model_kwargs=model_kwargs,
     streaming=False
-)
-
-# Create a custom prompt template
-prompt_template = PromptTemplate(
-    input_variables=["context", "question"],
-    template=f"{system_message}\n\nContext: {{context}}\n\nHuman: {{question}}\n\nAssistant:"
-)
-
-# Create the RetrievalQA chain with the custom prompt
-qa = RetrievalQA.from_chain_type(
-    llm=llm, 
-    retriever=retriever,
-    chain_type_kwargs={"prompt": prompt_template},
-    return_source_documents=True
 )
 
 if "messages" not in st.session_state:
@@ -71,10 +73,15 @@ if prompt := st.chat_input("What would you like to know about Dayos?"):
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # Use the RetrievalQA chain to get the response
-    response = qa(prompt)
-
-    assistant_response = response['result']
+    # Use the getAnswers function to get the response
+    kb_response = getAnswers(prompt)
+    
+    if kb_response:
+        # Use the LLM to generate a final response based on the KB response and system message
+        final_prompt = f"{system_message}\n\nContext: {kb_response}\n\nHuman: {prompt}\n\nAssistant:"
+        assistant_response = llm.predict(final_prompt)
+    else:
+        assistant_response = "I'm sorry, I couldn't retrieve the information at the moment. Please try again later."
 
     with st.chat_message("assistant"):
         st.markdown(assistant_response)
