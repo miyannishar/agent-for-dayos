@@ -14,14 +14,6 @@ import traceback
 
 st.title("Dayos AI Assistant")
 
-# Initialize the Bedrock runtime client
-bedrock_runtime = boto3.client(
-    service_name='bedrock-runtime',
-    region_name=st.secrets["aws_credentials"]["AWS_REGION"],
-    aws_access_key_id=st.secrets["aws_credentials"]["AWS_ACCESS_KEY_ID"],
-    aws_secret_access_key=st.secrets["aws_credentials"]["AWS_SECRET_ACCESS_KEY"]
-)
-
 # Initialize the Bedrock agent runtime client
 bedrock_agent_runtime = boto3.client(
     service_name='bedrock-agent-runtime',
@@ -30,10 +22,22 @@ bedrock_agent_runtime = boto3.client(
     aws_secret_access_key=st.secrets["aws_credentials"]["AWS_SECRET_ACCESS_KEY"]
 )
 
+# Define the prompt template
+prompt_template = PromptTemplate(
+    input_variables=["question"],
+    template="""You are Dayos Agent. Dayos is a new company. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. You may be asked about Dayos or some technical knowledg about otacle.
+
+Human: {question}
+Assistant:"""
+)
+
 def getAnswers(question):
     try:
+        # Format the question using the prompt template
+        formatted_question = prompt_template.format(question=question)
+        
         knowledgeBaseResponse = bedrock_agent_runtime.retrieve_and_generate(
-            input={'text': question},
+            input={'text': formatted_question},
             retrieveAndGenerateConfiguration={
                 'knowledgeBaseConfiguration': {
                     'knowledgeBaseId': "G20GV5OFLB",
@@ -45,21 +49,6 @@ def getAnswers(question):
     except Exception as e:
         st.error(f"Error in getAnswers: {str(e)}")
         return None
-
-# Initialize the LLM with system message
-system_message = """You are Dayos Agent. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. Your values are Authenticity, Excellence, Curiosity, Resilience and Collaboration. Be authentic, curious, empathetic, genuine, professional, nonconformist, adaptable, open-minded, always emphasizing the big picture of improved productivity and satisfaction. Use clear language, avoid jargon. Don't say that I am an AI agent. Say I am Dayos Agent. If something technical is asked and you know the answer, answer it straight. If you don't know the answer, say you don't know. Don't make up an answer. Don't say I would respond like this and all. Do not mention actions like clears throat or any other actions. Just answer the question."""
-
-model_kwargs = {
-    "temperature": 0.3,
-    "top_p": 0.9,
-    "max_tokens": 3000,
-}
-# llm = ChatBedrock(
-#     model_id="anthropic.claude-3-haiku-20240307-v1:0",
-#     client=bedrock_runtime,
-#     model_kwargs=model_kwargs,
-#     streaming=False
-# )
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -74,15 +63,13 @@ if prompt := st.chat_input("What would you like to know about Dayos?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     # Use the getAnswers function to get the response
-    kb_response = getAnswers(prompt)
-    
-    if kb_response:
-        # Use the LLM to generate a final response based on the KB response and system message
-        final_prompt = f"{system_message}\n\nContext: {kb_response}\n\nHuman: {prompt}\n\nAssistant:"
-        assistant_response = llm.predict(final_prompt)
-    else:
-        assistant_response = "I'm sorry, I couldn't retrieve the information at the moment. Please try again later."
+    assistant_response = getAnswers(prompt)
 
-    with st.chat_message("assistant"):
-        st.markdown(assistant_response)
-    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+    print(assistant_response)
+    
+    if assistant_response:
+        with st.chat_message("assistant"):
+            st.markdown(assistant_response)
+        st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+    else:
+        st.error("I'm sorry, I couldn't retrieve the information at the moment. Please try again later.")
