@@ -54,12 +54,12 @@ model_kwargs = {
     "top_p": 0.9,
     "max_tokens": 3000,
 }
-llm = ChatBedrock(
-    model_id="anthropic.claude-3-haiku-20240307-v1:0",
-    client=bedrock_runtime,
-    model_kwargs=model_kwargs,
-    streaming=False
-)
+# llm = ChatBedrock(
+#     model_id="anthropic.claude-3-haiku-20240307-v1:0",
+#     client=bedrock_runtime,
+#     model_kwargs=model_kwargs,
+#     streaming=False
+# )
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
