@@ -25,7 +25,7 @@ bedrock_runtime = boto3.client(
 # Initialize the Knowledge Base Retriever
 try:
     retriever = AmazonKnowledgeBasesRetriever(
-        knowledge_base_id=st.secrets["bedrock_agent"]["BEDROCK_AGENT_ID"],
+        knowledge_base_id="G20GV5OFLB",
         retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 4}},
     )
 except Exception as e:
