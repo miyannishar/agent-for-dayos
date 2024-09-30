@@ -36,7 +36,7 @@ def getAnswers(question):
             input={'text': question},
             retrieveAndGenerateConfiguration={
                 'knowledgeBaseConfiguration': {
-                    'knowledgeBaseId': st.secrets["bedrock_agent"]["KNOWLEDGE_BASE_ID"],
+                    'knowledgeBaseId': "G20GV5OFLB",
                     'modelArn': 'arn:aws:bedrock:us-west-2::foundation-model/meta.llama3-1-405b-instruct-v1:0'
                 },
                 'type': 'KNOWLEDGE_BASE'
