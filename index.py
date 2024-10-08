@@ -23,21 +23,21 @@ bedrock_agent_runtime = boto3.client(
 )
 
 # Define the prompt template
-prompt_template = PromptTemplate(
-    input_variables=["question"],
-    template="""You are Dayos Agent. Dayos is a new company. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. You may be asked about Dayos or some technical knowledg about otacle. Give the response from knowledge base with Dayos tone.
+# prompt_template = PromptTemplate(
+#     input_variables=["question"],
+#     template="""You are Dayos Agent. Dayos is a new company. You are informed about Dayos and the documentation of Oracle. Speak as a knowledgeable peer, using a straightforward and slightly irreverent tone that challenges the status quo. You may be asked about Dayos or some technical knowledg about otacle. Give the response from knowledge base with Dayos tone.
 
-Human: {question}
-Assistant:"""
-)
+# Human: {question}
+# Assistant:"""
+# )
 
 def getAnswers(question):
     try:
         # Format the question using the prompt template
-        formatted_question = prompt_template.format(question=question)
+        # formatted_question = prompt_template.format(question=question)
         
         knowledgeBaseResponse = bedrock_agent_runtime.retrieve_and_generate(
-            input={'text': formatted_question},
+            input={'text': question},
             retrieveAndGenerateConfiguration={
                 'knowledgeBaseConfiguration': {
                     'knowledgeBaseId': "G20GV5OFLB",
